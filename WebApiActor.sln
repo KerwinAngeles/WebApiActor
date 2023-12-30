@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34322.80
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiActor", "WebApiActor.csproj", "{A6E73593-81D1-4DF1-AF4A-6E34B86E43E1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A6E73593-81D1-4DF1-AF4A-6E34B86E43E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6E73593-81D1-4DF1-AF4A-6E34B86E43E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6E73593-81D1-4DF1-AF4A-6E34B86E43E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6E73593-81D1-4DF1-AF4A-6E34B86E43E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {14C919AF-3244-4D08-B0FB-17F7243138D2}
+	EndGlobalSection
+EndGlobal
