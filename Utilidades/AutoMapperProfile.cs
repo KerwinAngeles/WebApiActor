@@ -27,7 +27,7 @@ namespace WebApiActor.Utilidades
             CreateMap<ComentarioDTOId,  Comentario>();
             CreateMap<Comentario, ComentarioDTOId>();
         }
-
+        
         private List<ActorDTOId> MapPeliculaActor(Pelicula pelicula, PeliculaDTOId peliDTO)
         {
             var result = new List<ActorDTOId>();

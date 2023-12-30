@@ -33,6 +33,19 @@ namespace WebApiActor.Controllers
             return _mapper.Map<List<ComentarioDTOId>>(comentario);
         }
 
+        [HttpGet("{id}", Name = "GetComentario")]
+        public async Task<ActionResult<ComentarioDTOId>> GetComentarioById(int idComentario)
+        {
+            var comentario = await _context.Comentarios.FirstOrDefaultAsync(comentarioDB => comentarioDB.Id == idComentario);
+            if(comentario == null)
+            {
+                return NotFound();
+            }
+
+            return _mapper.Map<ComentarioDTOId>(comentario);
+        }
+            
+
         [HttpPost]
         public async Task<ActionResult> PostComentario([FromBody] ComentarioDTO comentarioDTO, int peliculaId)
         {
@@ -46,7 +59,9 @@ namespace WebApiActor.Controllers
             comentario.PeliculaId = peliculaId;
             _context.Add(comentario);
             await _context.SaveChangesAsync();
-            return Ok("Comentario Agregado");
+
+            var entidadComentarioDTO = _mapper.Map<ComentarioDTOId>(comentario);
+            return CreatedAtRoute("GetComentario", routeValues: new {id = comentario.Id}, value: entidadComentarioDTO);
         }
     }
 }

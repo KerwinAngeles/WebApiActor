@@ -28,7 +28,7 @@ namespace WebApiActor.Controllers
             return _mapper.Map<List<PeliculaDTOId>>(pelicula);
         }
 
-        [HttpGet("{id}")] // Obtener pelicula por id
+        [HttpGet("{id}", Name ="GetPelicula")] // Obtener pelicula por id
         public async Task<ActionResult<PeliculaConActorDTO>> GetPeliculaId(int id)
         {
             var pelicula = await _context.Peliculas
@@ -69,7 +69,8 @@ namespace WebApiActor.Controllers
             }
             _context.Add(pelicula);
             await _context.SaveChangesAsync();
-            return Ok("Pelicula Creada");
+            var entidadPeliculaDTO = _mapper.Map<PeliculaDTOId>(pelicula);
+            return CreatedAtRoute("GetPelicula", routeValues: new { id = pelicula.Id }, value: entidadPeliculaDTO);
         }
 
         [HttpPut("{id}")] // Actualizando pelicula
