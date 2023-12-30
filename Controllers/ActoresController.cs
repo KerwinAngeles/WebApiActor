@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiActor.Data;
@@ -61,7 +62,7 @@ namespace WebApiActor.Controllers
         }
 
         [HttpPut("{id}")] // Actualizando un actor
-        public async Task<ActionResult> UpdateActor([FromBody] ActorDTOId actorDTO, int id)
+        public async Task<ActionResult> UpdateActor([FromBody] ActorDTO actorDTO, int id)
         {
         
             var existe = await _context.Actors.AnyAsync(actor => actor.Id == id);
@@ -71,9 +72,37 @@ namespace WebApiActor.Controllers
             }
 
             var actor = mapper.Map<Actor>(actorDTO);
+            actor.Id = id;
             _context.Update(actor);
             await _context.SaveChangesAsync();
-            return Ok("Actor actualizado");
+            return NoContent();
+        }
+
+        [HttpPatch]
+        public async Task<ActionResult> PatchActor(int id, JsonPatchDocument<ActorDTO> patchDocument)
+        {
+            if(patchDocument == null)
+            {
+                return BadRequest();
+            }
+            var actorDB = await _context.Actors.FirstOrDefaultAsync(a => a.Id == id);
+            if (actorDB == null)
+            {
+                return NotFound();
+            }
+            var ActorDTO = mapper.Map<ActorDTO>(actorDB);
+
+            patchDocument.ApplyTo(ActorDTO, ModelState);
+
+            var esValido = TryValidateModel(ActorDTO);
+            if (!esValido)
+            {
+                return BadRequest(ModelState);
+            }
+
+            mapper.Map(ActorDTO, actorDB);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
 
         [HttpDelete("{id}")] // Eliminando un actor
@@ -86,8 +115,9 @@ namespace WebApiActor.Controllers
             }
             _context.Remove(new Actor { Id = id });
             await _context.SaveChangesAsync();
-            return Ok("Actor eliminado");
+            return NoContent();
         }
+
 
     }
 }

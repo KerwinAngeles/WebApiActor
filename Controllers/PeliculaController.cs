@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiActor.Data;
 using WebApiActor.DTO;
 using WebApiActor.Models;
+using WebApiActor.Services.Interfaces;
 
 namespace WebApiActor.Controllers
 {
@@ -14,11 +16,13 @@ namespace WebApiActor.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IOrdenarActores _ordenarActores;
 
-        public PeliculaController(ApplicationDbContext context, IMapper mapper)
+        public PeliculaController(ApplicationDbContext context, IMapper mapper, IOrdenarActores ordenarActores)
         {
             _context = context;
             _mapper = mapper;
+            _ordenarActores = ordenarActores;
         }
 
         [HttpGet] // Obteniendo todas las peliculas
@@ -35,6 +39,11 @@ namespace WebApiActor.Controllers
                 .Include(actoresDB => actoresDB.ActoresPeliculas)
                 .ThenInclude(actoresDePelicula => actoresDePelicula.Actor)
                 .FirstOrDefaultAsync(peliculaDB => peliculaDB.Id == id);
+
+            if(pelicula == null)
+            {
+                return NotFound();
+            }
 
             pelicula.ActoresPeliculas = pelicula.ActoresPeliculas.OrderBy(o => o.Orden).ToList();
             return _mapper.Map<PeliculaConActorDTO>(pelicula);
@@ -60,32 +69,69 @@ namespace WebApiActor.Controllers
 
             var pelicula = _mapper.Map<Pelicula>(peliculaDTO);
 
-            if (pelicula.ActoresPeliculas != null)
-            {
-                for (int i = 1; i < pelicula.ActoresPeliculas.Count; i++)
-                {
-                    pelicula.ActoresPeliculas[i].Orden = i;
-                }
-            }
+            _ordenarActores.OrdenarActores(pelicula);
+           
             _context.Add(pelicula);
             await _context.SaveChangesAsync();
             var entidadPeliculaDTO = _mapper.Map<PeliculaDTOId>(pelicula);
             return CreatedAtRoute("GetPelicula", routeValues: new { id = pelicula.Id }, value: entidadPeliculaDTO);
         }
 
-        [HttpPut("{id}")] // Actualizando pelicula
-        public async Task<ActionResult> PutPelicula([FromBody] PeliculaDTOId peliculaDTO, int idPelicula)
+        [HttpPut] // Actualizando pelicula
+        public async Task<ActionResult> PutPelicula([FromBody] PeliculaDTO peliculaDTO, int idPelicula)
         {
-            var existe = await _context.Peliculas.AnyAsync(p => p.Id == idPelicula);
-            if (!existe)
+           var peliculaDB = await _context.Peliculas.Include(p => p.ActoresPeliculas).FirstOrDefaultAsync(p => p.Id == idPelicula);
+            if(peliculaDB == null)
             {
-                return NotFound("Pelicula no encontrada");
+                return NotFound();
+            }
+            _ordenarActores.OrdenarActores(peliculaDB);
+            peliculaDB = _mapper.Map(peliculaDTO, peliculaDB);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpPatch] // actualizando un valor de la pelicula
+        public async Task<ActionResult> PatchPelicula(int id, JsonPatchDocument<PeliculaPatchDTO> patchDocument)
+        {
+            if (patchDocument == null)
+            {
+                return BadRequest();
             }
 
-            var pelicula = _mapper.Map<Pelicula>(peliculaDTO);
-            _context.Add(pelicula);
+            var peliculaDB = await _context.Peliculas.FirstOrDefaultAsync(p => p.Id == id);
+            if(peliculaDB == null)
+            {
+                return NotFound();
+            }
+
+            var peliculaDTO = _mapper.Map<PeliculaPatchDTO>(peliculaDB);
+            patchDocument.ApplyTo(peliculaDTO, ModelState);
+
+            var esValido = TryValidateModel(peliculaDTO);
+            if(!esValido)
+            {
+                return BadRequest();
+            }
+
+            _mapper.Map(peliculaDTO, peliculaDB);
             await _context.SaveChangesAsync();
-            return Ok("Pelicula actualizada");
+            return NoContent();
+
+        }
+
+        [HttpDelete("Id:int")]
+        public async Task<ActionResult> DeletePelicula(int id)
+        {
+            var existePelicula = await _context.Peliculas.AnyAsync(p => p.Id == id);
+            if (!existePelicula)
+            {
+                return NotFound();
+            }
+
+            _context.Remove(new Pelicula {Id = id});
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

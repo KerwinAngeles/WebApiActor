@@ -8,6 +8,7 @@ namespace WebApiActor.Utilidades
     {
         public AutoMapperProfile()
         {
+            CreateMap<Actor, ActorDTO>();
             CreateMap<ActorDTO, Actor>();
             CreateMap<ActorDTOId, Actor>();
             CreateMap<Actor, ActorDTOId>();
@@ -17,7 +18,8 @@ namespace WebApiActor.Utilidades
 
             CreateMap<PeliculaDTO, Pelicula>().ForMember(pelicula => pelicula.ActoresPeliculas,
                 opciones => opciones.MapFrom(MapActorPelicula));
-
+            CreateMap<PeliculaPatchDTO, Pelicula>();
+            CreateMap<Pelicula, PeliculaPatchDTO>();
             CreateMap<PeliculaDTOId, Pelicula>();
             CreateMap<Pelicula, PeliculaDTOId>();
             CreateMap<Pelicula, PeliculaConActorDTO>().ForMember(peliculaDB => peliculaDB.Actors,
