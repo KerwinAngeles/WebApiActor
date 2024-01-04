@@ -1,4 +1,8 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using WebApiActor.Data;
 using WebApiActor.Services;
 using WebApiActor.Services.Interfaces;
@@ -15,6 +19,21 @@ var connectionString = builder.Configuration.GetConnectionString("AppConnection"
 builder.Services.AddDbContext<ApplicationDbContext>(op => op.UseSqlServer(connectionString));
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IOrdenarActores, OrdenarActoresService>();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opciones => opciones.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["keyjwt"])),
+        ClockSkew = TimeSpan.Zero
+    });
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+builder.Services.AddScoped<IRespuestaAutentication, RespuestaAutenticactionServices>();
 
 var app = builder.Build();
 
