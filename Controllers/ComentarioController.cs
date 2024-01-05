@@ -1,5 +1,8 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.InteropServices;
@@ -13,12 +16,15 @@ namespace WebApiActor.Controllers
     [ApiController]
     public class ComentarioController : ControllerBase
     {
-        public readonly ApplicationDbContext _context;
-        public readonly IMapper _mapper;
-        public ComentarioController(ApplicationDbContext context, IMapper mapper)
+        private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
+        private readonly UserManager<IdentityUser> _user;
+
+        public ComentarioController(ApplicationDbContext context, IMapper mapper, UserManager<IdentityUser> user)
         {
             _context = context;
             _mapper = mapper;
+            _user = user;
         }
 
         [HttpGet] // obteniendo todos los comentarios
@@ -48,8 +54,14 @@ namespace WebApiActor.Controllers
             
 
         [HttpPost] // agregado un comentario
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult> PostComentario([FromBody] ComentarioDTO comentarioDTO, int peliculaId)
         {
+            var emailClain = HttpContext.User.Claims.Where(c => c.Type == "email").FirstOrDefault();
+            var email = emailClain.Value;
+            var usuario = await _user.FindByEmailAsync(email);
+            var usuarioId = usuario.Id;
+
             var existePelicula = await _context.Peliculas.AnyAsync(p => p.Id == peliculaId);
             if(!existePelicula)
             {
@@ -58,6 +70,7 @@ namespace WebApiActor.Controllers
 
             var comentario = _mapper.Map<Comentario>(comentarioDTO);
             comentario.PeliculaId = peliculaId;
+            comentario.UsuarioId = usuarioId;
             _context.Add(comentario);
             await _context.SaveChangesAsync();
 

@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using WebApiActor.DTO;
 using WebApiActor.Services.Interfaces;
 
@@ -20,15 +23,14 @@ namespace WebApiActor.Controllers
             _signInManager = signInManager;
 
         }
-        [HttpPost]
-        [Route("Register")]
+        [HttpPost("Registro")]
         public async Task<ActionResult<RespuestaAutenticacionDTO>> Registro(CredencialesDTO credenciales)
         {
             var usuario = new IdentityUser { UserName = credenciales.Email, Email = credenciales.Email };
             var resultado = await _userManager.CreateAsync(usuario, credenciales.Password);
             if(resultado.Succeeded)
             {
-                return _respuesta.CreacionToken(credenciales);
+                return await _respuesta.CreacionToken(credenciales);
             }
             else
             {
@@ -36,8 +38,7 @@ namespace WebApiActor.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("Login")]
+        [HttpPost("Login")]
         public async Task<ActionResult<RespuestaAutenticacionDTO>> Login(CredencialesDTO credenciales)
         {
             var resultado = await _signInManager.PasswordSignInAsync(credenciales.Email, credenciales.Password,
@@ -45,12 +46,44 @@ namespace WebApiActor.Controllers
 
             if(resultado.Succeeded)
             {
-                return _respuesta.CreacionToken(credenciales);
+                return await _respuesta.CreacionToken(credenciales);
             }
             else
             {
                 return BadRequest("Login Incorrecto");
             }
+        }
+
+        [HttpGet("NuevoToken")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<ActionResult<RespuestaAutenticacionDTO>> Renovar()
+        {
+            var emailClain = HttpContext.User.Claims.Where(c => c.Type == "email").FirstOrDefault();
+            var email = emailClain.Value;
+
+            CredencialesDTO credenciales = new CredencialesDTO()
+            {
+                Email = email
+                
+            };
+
+            return await _respuesta.CreacionToken(credenciales);
+        }
+
+        [HttpPost("CreateAdmin")]
+        public async Task<ActionResult> CrearAdmin(AdminDTO adminDTO)
+        {
+            var usuario = await _userManager.FindByEmailAsync(adminDTO.email);
+            await _userManager.AddClaimAsync(usuario, new Claim("Admin", "true"));
+            return NoContent();
+        }
+
+        [HttpPost("RemoveAdmin")]
+        public async Task<ActionResult> RemoverAdmin(AdminDTO adminDTO)
+        {
+            var usuario = await _userManager.FindByEmailAsync(adminDTO.email);
+            await _userManager.RemoveClaimAsync(usuario, new Claim("Admin", "true"));
+            return NoContent();
         }
     }
 }

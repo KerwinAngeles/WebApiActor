@@ -4,6 +4,6 @@ namespace WebApiActor.Services.Interfaces
 {
     public interface IRespuestaAutentication
     {
-        RespuestaAutenticacionDTO CreacionToken (CredencialesDTO credenciales);
+        Task<RespuestaAutenticacionDTO> CreacionToken (CredencialesDTO credenciales);
     }
 }

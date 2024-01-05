@@ -25,7 +25,7 @@ namespace WebApiActor.Controllers
         }
 
         [HttpGet] // Obteniendo todo los actores
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Admin")]
         public async Task<ActionResult<List<ActorDTOId>>> GetActores()
         {
             var autores =  await _context.Actors.ToListAsync();
