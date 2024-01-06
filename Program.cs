@@ -84,8 +84,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddScoped<GeneradorEnlaces>();
-builder.Services.AddScoped<HATEOSActorFilterAttribute>();
+builder.Services.AddTransient<GeneradorEnlaces>();
+builder.Services.AddTransient<HATEOSActorFilterAttribute>();
 builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
 var app = builder.Build();

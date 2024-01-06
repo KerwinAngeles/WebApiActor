@@ -12,7 +12,7 @@ namespace WebApiActor.Utilidades
             {
                 return false;
             }
-            var cabecera = context.HttpContext.Request.Headers["IncluirHATEOS"];
+            var cabecera = context.HttpContext.Request.Headers["incluirHATEOAS"];
             
             if (cabecera.Count == 0)
             {

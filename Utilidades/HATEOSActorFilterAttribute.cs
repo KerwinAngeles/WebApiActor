@@ -22,8 +22,18 @@ namespace WebApiActor.Utilidades
             }
 
             var resultado = context.Result as ObjectResult;
-            var modelo = resultado.Value as ActorDTOId ?? throw new ArgumentNullException("Se esperaba una instancia de actorDTO");
-            await _enlaces.GenerarElancesActor(modelo);
+            var actorDTO = resultado.Value as ActorDTOId;
+            if (actorDTO == null)
+            {
+                var actoresDTO = resultado.Value as List<ActorDTOId> ?? throw new ArgumentNullException("Se esperaba una instancia de actorDTO");
+                actoresDTO.ForEach(async actor => await _enlaces.GenerarElancesActor(actor));
+                resultado.Value = actoresDTO;
+            }
+            else
+            {
+                await _enlaces.GenerarElancesActor(actorDTO);
+            }
+        
             await next();
         }
     }

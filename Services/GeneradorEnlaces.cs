@@ -51,6 +51,7 @@ namespace WebApiActor.Services
                 enlace: Url.Link("ActualizarActor", new { id = actorDTO.Id }),
                 descripcion: "actualizar-actor",
                 metodo: "PUT"));
+
                 actorDTO.Enlaces.Add(new DatoHateoas(
                     enlace: Url.Link("EliminarActor", new { id = actorDTO.Id }),
                     descripcion: "eliminar-actor",

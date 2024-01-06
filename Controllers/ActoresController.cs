@@ -30,37 +30,17 @@ namespace WebApiActor.Controllers
 
         [HttpGet(Name = "ObtenerActores")] // Obteniendo todo los actores
         [AllowAnonymous]
-        public async Task<IActionResult> GetActores([FromQuery] bool IncluirHATEOS = true)
+        [ServiceFilter(typeof(HATEOSActorFilterAttribute))]
+        public async Task<ActionResult<List<ActorDTOId>>> GetActores([FromHeader] string incluirHATEOAS)
         {
             var autores =  await _context.Actors.ToListAsync();
-            var dtos = mapper.Map<List<ActorDTOId>>(autores);
-
-            if(IncluirHATEOS)
-            {
-                var admin = await _authorizationService.AuthorizeAsync(User, "Admin");
-
-                //dtos.ForEach(dto => GenerarElancesActor(dto, admin.Succeeded));
-
-                var resultado = new ColeccionDeRecurso<ActorDTOId> { Valores = dtos };
-                resultado.Enlaces.Add(new DatoHateoas(enlace: Url.Link("ObtenerActores", new { }),
-                    descripcion: "self", metodo: "GET"));
-
-                if (admin.Succeeded)
-                {
-                    resultado.Enlaces.Add(new DatoHateoas(enlace: Url.Link("CrearActor", new { }),
-                    descripcion: "crear-actor", metodo: "POST"));
-                }
-
-                return Ok();
-            }
-            
-            return Ok(dtos);
+            return mapper.Map<List<ActorDTOId>>(autores);
 
         }
         [HttpGet("{id}/getActorId", Name = "ObtenerActoresPorId")] // obteniendo actores por id
         [AllowAnonymous]
         [ServiceFilter(typeof(HATEOSActorFilterAttribute))]
-        public async Task<ActionResult<ActorConPeliculaDTO>> GetOneActor(int id, [FromHeader] string IncluirHATEOS)
+        public async Task<ActionResult<ActorConPeliculaDTO>> GetOneActor(int id, [FromHeader] string incluirHATEOAS)
         {
             var actor = await _context.Actors
                 .Include(peliculaDB => peliculaDB.ActoresPeliculas)
@@ -75,6 +55,7 @@ namespace WebApiActor.Controllers
             var dto = mapper.Map<ActorConPeliculaDTO>(actor);
             return dto;
         }
+
         [HttpGet("{nombre}", Name = "ObtenerActoresPorNombre")] // Obteniendo actores por nombre
         public async Task<ActionResult<List<ActorDTOId>>> GetActorForName(string name)
         {
@@ -149,8 +130,5 @@ namespace WebApiActor.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-
-       
-
     }
 }
