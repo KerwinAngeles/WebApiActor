@@ -8,32 +8,59 @@ using Microsoft.EntityFrameworkCore;
 using WebApiActor.Data;
 using WebApiActor.DTO;
 using WebApiActor.Models;
+using WebApiActor.Utilidades;
 
 namespace WebApiActor.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ActoresController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper mapper;
+        private readonly IAuthorizationService _authorizationService;
 
-        public ActoresController(ApplicationDbContext context, IMapper mapper)
+        public ActoresController(ApplicationDbContext context, IMapper mapper, IAuthorizationService service)
         {
             _context = context;
             this.mapper = mapper;
+            _authorizationService = service;
         }
 
-        [HttpGet] // Obteniendo todo los actores
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Admin")]
-        public async Task<ActionResult<List<ActorDTOId>>> GetActores()
+        [HttpGet(Name = "ObtenerActores")] // Obteniendo todo los actores
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActores([FromQuery] bool IncluirHATEOS = true)
         {
             var autores =  await _context.Actors.ToListAsync();
-            return mapper.Map<List<ActorDTOId>>(autores);
+            var dtos = mapper.Map<List<ActorDTOId>>(autores);
+
+            if(IncluirHATEOS)
+            {
+                var admin = await _authorizationService.AuthorizeAsync(User, "Admin");
+
+                //dtos.ForEach(dto => GenerarElancesActor(dto, admin.Succeeded));
+
+                var resultado = new ColeccionDeRecurso<ActorDTOId> { Valores = dtos };
+                resultado.Enlaces.Add(new DatoHateoas(enlace: Url.Link("ObtenerActores", new { }),
+                    descripcion: "self", metodo: "GET"));
+
+                if (admin.Succeeded)
+                {
+                    resultado.Enlaces.Add(new DatoHateoas(enlace: Url.Link("CrearActor", new { }),
+                    descripcion: "crear-actor", metodo: "POST"));
+                }
+
+                return Ok();
+            }
+            
+            return Ok(dtos);
 
         }
-        [HttpGet("{id}/getActorId", Name = "GetActor")] // obteniendo actores por id
-        public async Task<ActionResult<ActorConPeliculaDTO>> GetOneActor(int id)
+        [HttpGet("{id}/getActorId", Name = "ObtenerActoresPorId")] // obteniendo actores por id
+        [AllowAnonymous]
+        [ServiceFilter(typeof(HATEOSActorFilterAttribute))]
+        public async Task<ActionResult<ActorConPeliculaDTO>> GetOneActor(int id, [FromHeader] string IncluirHATEOS)
         {
             var actor = await _context.Actors
                 .Include(peliculaDB => peliculaDB.ActoresPeliculas)
@@ -44,16 +71,18 @@ namespace WebApiActor.Controllers
             {
                 return NotFound();
             }
-            return mapper.Map<ActorConPeliculaDTO>(actor);
+
+            var dto = mapper.Map<ActorConPeliculaDTO>(actor);
+            return dto;
         }
-        [HttpGet("{nombre}")] // Obteniendo actores por nombre
+        [HttpGet("{nombre}", Name = "ObtenerActoresPorNombre")] // Obteniendo actores por nombre
         public async Task<ActionResult<List<ActorDTOId>>> GetActorForName(string name)
         {
             var actorName = await _context.Actors.Where(actorDb => actorDb.Name.Contains(name)).ToListAsync();
             return mapper.Map<List<ActorDTOId>>(actorName);
         }
 
-        [HttpPost] // Creando un actor
+        [HttpPost(Name = "CrearActor")] // Creando un actor
         public async Task<ActionResult> PostActor([FromBody] ActorDTO actorDTO)
         {
 
@@ -61,10 +90,10 @@ namespace WebApiActor.Controllers
             _context.Add(actor);
             await _context.SaveChangesAsync();
             var entidadActorDTO = mapper.Map<ActorDTOId>(actor);
-            return CreatedAtRoute("GetActor", routeValues: new { id = actor.Id }, value: entidadActorDTO);
+            return CreatedAtRoute("ObtenerActoresPorId", routeValues: new { id = actor.Id }, value: entidadActorDTO);
         }
 
-        [HttpPut("{id}")] // Actualizando un actor
+        [HttpPut("{id}", Name = "ActualizarActor")] // Actualizando un actor
         public async Task<ActionResult> UpdateActor([FromBody] ActorDTO actorDTO, int id)
         {
         
@@ -81,7 +110,7 @@ namespace WebApiActor.Controllers
             return NoContent();
         }
 
-        [HttpPatch]
+        [HttpPatch(Name = "ActualizarAtributoDeActor")]
         public async Task<ActionResult> PatchActor(int id, JsonPatchDocument<ActorDTO> patchDocument)
         {
             if(patchDocument == null)
@@ -108,7 +137,7 @@ namespace WebApiActor.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")] // Eliminando un actor
+        [HttpDelete("{id}", Name = "EliminarActor")] // Eliminando un actor
         public async Task<ActionResult> DeleteActor(int id)
         {
             var existe = await _context.Actors.AnyAsync(i => i.Id == id);
@@ -121,6 +150,7 @@ namespace WebApiActor.Controllers
             return NoContent();
         }
 
+       
 
     }
 }

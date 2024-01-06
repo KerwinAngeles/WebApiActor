@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -9,6 +10,7 @@ using System.Text;
 using WebApiActor.Data;
 using WebApiActor.Services;
 using WebApiActor.Services.Interfaces;
+using WebApiActor.Utilidades;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +53,7 @@ var connectionString = builder.Configuration.GetConnectionString("AppConnection"
 builder.Services.AddDbContext<ApplicationDbContext>(op => op.UseSqlServer(connectionString));
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IOrdenarActores, OrdenarActoresService>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opciones => opciones.TokenValidationParameters = new TokenValidationParameters
     {
@@ -62,9 +65,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             Encoding.UTF8.GetBytes(builder.Configuration["keyjwt"])),
         ClockSkew = TimeSpan.Zero
     });
+
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
 builder.Services.AddScoped<IRespuestaAutentication, RespuestaAutenticactionServices>();
 builder.Services.AddAuthorization(opcion =>
 {
@@ -78,6 +83,10 @@ builder.Services.AddCors(options =>
         app.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
     });
 });
+
+builder.Services.AddScoped<GeneradorEnlaces>();
+builder.Services.AddScoped<HATEOSActorFilterAttribute>();
+builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
 var app = builder.Build();
 

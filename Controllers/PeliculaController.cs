@@ -25,14 +25,14 @@ namespace WebApiActor.Controllers
             _ordenarActores = ordenarActores;
         }
 
-        [HttpGet] // Obteniendo todas las peliculas
+        [HttpGet(Name = "ObtenerPeliculas")] // Obteniendo todas las peliculas
         public async Task<ActionResult<List<PeliculaDTOId>>> GetPelicula()
         {
             var pelicula = await _context.Peliculas.ToListAsync();
             return _mapper.Map<List<PeliculaDTOId>>(pelicula);
         }
 
-        [HttpGet("{id}", Name ="GetPelicula")] // Obtener pelicula por id
+        [HttpGet("{id}", Name ="ObtenerPeliculasPorId")] // Obtener pelicula por id
         public async Task<ActionResult<PeliculaConActorDTO>> GetPeliculaId(int id)
         {
             var pelicula = await _context.Peliculas
@@ -49,7 +49,7 @@ namespace WebApiActor.Controllers
             return _mapper.Map<PeliculaConActorDTO>(pelicula);
         }
 
-        [HttpPost] // Agregando pelicula
+        [HttpPost(Name = "CrearPelicula")] // Agregando pelicula
         public async Task<ActionResult> PostPelicula([FromBody] PeliculaDTO peliculaDTO)
         {
             if(peliculaDTO.ActoresIds == null)
@@ -77,7 +77,7 @@ namespace WebApiActor.Controllers
             return CreatedAtRoute("GetPelicula", routeValues: new { id = pelicula.Id }, value: entidadPeliculaDTO);
         }
 
-        [HttpPut] // Actualizando pelicula
+        [HttpPut(Name = "ActualizarPelicula")] // Actualizando pelicula
         public async Task<ActionResult> PutPelicula([FromBody] PeliculaDTO peliculaDTO, int idPelicula)
         {
            var peliculaDB = await _context.Peliculas.Include(p => p.ActoresPeliculas).FirstOrDefaultAsync(p => p.Id == idPelicula);
@@ -91,7 +91,7 @@ namespace WebApiActor.Controllers
             return NoContent();
         }
 
-        [HttpPatch] // actualizando un valor de la pelicula
+        [HttpPatch(Name = "ActualizarValorDeUnaPelicula")] // actualizando un valor de la pelicula
         public async Task<ActionResult> PatchPelicula(int id, JsonPatchDocument<PeliculaPatchDTO> patchDocument)
         {
             if (patchDocument == null)
@@ -120,7 +120,7 @@ namespace WebApiActor.Controllers
 
         }
 
-        [HttpDelete("Id:int")]
+        [HttpDelete("Id:int", Name = "EliminarPelicula")]
         public async Task<ActionResult> DeletePelicula(int id)
         {
             var existePelicula = await _context.Peliculas.AnyAsync(p => p.Id == id);

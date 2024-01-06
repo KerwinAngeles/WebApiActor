@@ -1,6 +1,8 @@
-﻿namespace WebApiActor.DTO
+﻿using WebApiActor.Models;
+
+namespace WebApiActor.DTO
 {
-    public class ActorDTOId
+    public class ActorDTOId : Recurso
     {
         public int Id { get; set; } 
         public string Name { get; set; }

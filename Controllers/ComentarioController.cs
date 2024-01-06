@@ -27,7 +27,7 @@ namespace WebApiActor.Controllers
             _user = user;
         }
 
-        [HttpGet] // obteniendo todos los comentarios
+        [HttpGet(Name = "ObtenerComentarios")] // obteniendo todos los comentarios
         public async Task<ActionResult<List<ComentarioDTOId>>> GetComentarios(int peliculaId)
         {
             var existePelicula = await _context.Peliculas.AnyAsync(l => l.Id == peliculaId);
@@ -40,7 +40,7 @@ namespace WebApiActor.Controllers
             return _mapper.Map<List<ComentarioDTOId>>(comentario);
         }
 
-        [HttpGet("{id}", Name = "GetComentario")] // obteniendo un comentario por el id
+        [HttpGet("{id}", Name = "ObtenerComentariosPorId")] // obteniendo un comentario por el id
         public async Task<ActionResult<ComentarioDTOId>> GetComentarioById(int id)
         {
             var comentario = await _context.Comentarios.FirstOrDefaultAsync(comentarioDB => comentarioDB.Id == id);
@@ -53,7 +53,7 @@ namespace WebApiActor.Controllers
         }
             
 
-        [HttpPost] // agregado un comentario
+        [HttpPost(Name = "CrearComentario")] // agregado un comentario
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult> PostComentario([FromBody] ComentarioDTO comentarioDTO, int peliculaId)
         {
@@ -75,10 +75,10 @@ namespace WebApiActor.Controllers
             await _context.SaveChangesAsync();
 
             var entidadComentarioDTO = _mapper.Map<ComentarioDTOId>(comentario);
-            return CreatedAtRoute("GetComentario", routeValues: new {id = comentario.Id}, value: entidadComentarioDTO);
+            return CreatedAtRoute("GetComentarioPorId", routeValues: new {id = comentario.Id}, value: entidadComentarioDTO);
         }
 
-        [HttpPut("{id:int}")] // actualizando comentario
+        [HttpPut("{id:int}", Name = "ActualizarComentario")] // actualizando comentario
         public async Task<ActionResult> PutComentario([FromBody] ComentarioDTO comentarioDTO, int peliculaId, int id)
         {
             var existePelicula = await _context.Peliculas.AnyAsync(p => p.Id == peliculaId);

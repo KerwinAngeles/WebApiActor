@@ -23,7 +23,7 @@ namespace WebApiActor.Controllers
             _signInManager = signInManager;
 
         }
-        [HttpPost("Registro")]
+        [HttpPost("Registro", Name = "CrearCuenta")]
         public async Task<ActionResult<RespuestaAutenticacionDTO>> Registro(CredencialesDTO credenciales)
         {
             var usuario = new IdentityUser { UserName = credenciales.Email, Email = credenciales.Email };
@@ -38,7 +38,7 @@ namespace WebApiActor.Controllers
             }
         }
 
-        [HttpPost("Login")]
+        [HttpPost("Login", Name = "LoguearUsuario")]
         public async Task<ActionResult<RespuestaAutenticacionDTO>> Login(CredencialesDTO credenciales)
         {
             var resultado = await _signInManager.PasswordSignInAsync(credenciales.Email, credenciales.Password,
@@ -54,7 +54,7 @@ namespace WebApiActor.Controllers
             }
         }
 
-        [HttpGet("NuevoToken")]
+        [HttpGet("NuevoToken" , Name = "CrearNuevoToken")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult<RespuestaAutenticacionDTO>> Renovar()
         {
@@ -70,7 +70,7 @@ namespace WebApiActor.Controllers
             return await _respuesta.CreacionToken(credenciales);
         }
 
-        [HttpPost("CreateAdmin")]
+        [HttpPost("CreateAdmin", Name = "CrearNuevoAdmin")]
         public async Task<ActionResult> CrearAdmin(AdminDTO adminDTO)
         {
             var usuario = await _userManager.FindByEmailAsync(adminDTO.email);
@@ -78,7 +78,7 @@ namespace WebApiActor.Controllers
             return NoContent();
         }
 
-        [HttpPost("RemoveAdmin")]
+        [HttpPost("RemoveAdmin", Name = "RemoverUnAdmin")]
         public async Task<ActionResult> RemoverAdmin(AdminDTO adminDTO)
         {
             var usuario = await _userManager.FindByEmailAsync(adminDTO.email);
